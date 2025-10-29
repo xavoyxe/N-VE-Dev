@@ -1,3 +1,4 @@
+// === 12 PRODUKTE ===
 const products = [
     { id: 1, name: "Nova Runner", price: 189, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop", desc: "Ultralight. Breathable. Future-ready." },
     { id: 2, name: "Void Shell", price: 299, img: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=800&fit=crop", desc: "Waterproof. Modular. Invisible seams." },
@@ -16,6 +17,7 @@ const products = [
 let cart = JSON.parse(localStorage.getItem('nove-cart') || '[]');
 let currentProduct = null;
 
+// === ALLE ELEMENTE ===
 const els = {
     loader: document.getElementById('loader'),
     cartCount: document.getElementById('cart-count'),
@@ -30,18 +32,37 @@ const els = {
     addToCartBtn: document.getElementById('add-to-cart-btn'),
 };
 
+// === SEITE LADEN ===
 window.addEventListener('load', () => {
-    setTimeout(() => els.loader?.classList.add('hidden'), 1000);
-    updateCartCount();
+    // Loader verstecken
+    setTimeout(() => {
+        if (els.loader) els.loader.classList.add('hidden');
+    }, 1000);
+
+    // Icons laden
     lucide.createIcons();
 
-    const page = location.pathname.split('/').pop();
-    if (page === 'shop.html') renderShop();
-    if (page === 'product.html') loadProduct();
-    if (page === 'cart.html') renderCart();
+    // Warenkorb-Anzahl aktualisieren
+    updateCartCount();
+
+    // Welche Seite?
+    const currentPage = location.pathname.split('/').pop() || 'index.html';
+
+    if (currentPage === 'shop.html' || currentPage === 'shop') {
+        renderShop();
+    }
+    if (currentPage === 'product.html') {
+        loadProduct();
+    }
+    if (currentPage === 'cart.html' || currentPage === 'cart') {
+        renderCart();
+    }
 });
 
+// === SHOP RENDERN ===
 function renderShop() {
+    if (!els.productGrid) return;
+
     els.productGrid.innerHTML = products.map(p => `
     <div class="card" onclick="goToProduct(${p.id})">
       <img src="${p.img}" alt="${p.name}" loading="lazy" />
@@ -53,13 +74,18 @@ function renderShop() {
   `).join('');
 }
 
-function goToProduct(id) { location.href = `product.html?id=${id}`; }
+// === ZUM PRODUKT GEHEN ===
+function goToProduct(id) {
+    location.href = `/product.html?id=${id}`;
+}
 
+// === PRODUKT LADEN ===
 function loadProduct() {
     const params = new URLSearchParams(location.search);
     const id = parseInt(params.get('id'));
     const p = products.find(x => x.id === id);
-    if (!p) return location.href = '404.html';
+    if (!p) return location.href = '/404.html';
+
     currentProduct = p;
     els.productImg.src = p.img;
     els.productName.textContent = p.name;
@@ -67,29 +93,33 @@ function loadProduct() {
     els.productDesc.textContent = p.desc;
     els.pageTitle.textContent = `${p.name} – NØVE`;
 
-    // Button fixieren
     if (els.addToCartBtn) {
         els.addToCartBtn.onclick = () => addToCart(p);
     }
     lucide.createIcons();
 }
 
+// === WARENKORB FUNKTIONEN ===
 function addToCart(p) {
     const item = cart.find(i => i.id === p.id);
-    item ? item.qty++ : cart.push({ ...p, qty: 1 });
+    if (item) {
+        item.qty++;
+    } else {
+        cart.push({ ...p, qty: 1 });
+    }
     localStorage.setItem('nove-cart', JSON.stringify(cart));
     updateCartCount();
     alert('Zum Warenkorb hinzugefügt');
 }
 
 function updateCartCount() {
-    const total = cart.reduce((s, i) => s + i.qty, 0);
+    const total = cart.reduce((sum, i) => sum + i.qty, 0);
     if (els.cartCount) els.cartCount.textContent = total;
 }
 
 function renderCart() {
     if (!cart.length) {
-        els.cartItems.innerHTML = '<p class="center py-10 opacity-50">Warenkorb leer.</p>';
+        els.cartItems.innerHTML = '<p style="text-align:center; padding:2rem; opacity:0.5;">Warenkorb leer.</p>';
         els.cartTotal.textContent = '€0';
         return;
     }
